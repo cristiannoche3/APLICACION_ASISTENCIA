@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <title>DocenteTrack - Control de Asistencia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary: #4f46e5;
+        --secondary: #8b5cf6;
+      }
+      
+      body { 
+        font-family: 'Inter', sans-serif; 
+        background-color: #f8fafc;
+        background-image: radial-gradient(#e0e7ff 1px, transparent 1px);
+        background-size: 24px 24px;
+        color: #1e293b;
+      }
+      
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Outfit', sans-serif;
+      }
+
+      /* Smooth Animations */
+      .animate-entrance { animation: entrance 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; transform: translateY(20px); }
+      .animate-scale-in { animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; transform: scale(0.9); }
+      .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+      .animate-float { animation: float 6s ease-in-out infinite; }
+      .animate-float-reverse { animation: floatReverse 7s ease-in-out infinite; }
+      .animate-spin-slow { animation: spinSlow 20s linear infinite; }
+      
+      .delay-100 { animation-delay: 100ms; }
+      .delay-200 { animation-delay: 200ms; }
+      .delay-300 { animation-delay: 300ms; }
+      .delay-500 { animation-delay: 500ms; }
+      .delay-700 { animation-delay: 700ms; }
+
+      @keyframes entrance {
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes scaleIn {
+        to { opacity: 1; transform: scale(1); }
+      }
+      @keyframes fadeIn { 
+        from { opacity: 0; } to { opacity: 1; } 
+      }
+      @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+      }
+      @keyframes floatReverse {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(10px); }
+        100% { transform: translateY(0px); }
+      }
+      @keyframes spinSlow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+      /* Advanced Splash Screen Animations */
+      @keyframes blob {
+        0% { transform: translate(0px, 0px) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+        100% { transform: translate(0px, 0px) scale(1); }
+      }
+      .animate-blob {
+        animation: blob 10s infinite;
+      }
+      
+      @keyframes shimmer {
+        0% { background-position: 200% center; }
+        100% { background-position: -200% center; }
+      }
+      
+      .animate-gradient-x {
+        background-size: 200% auto;
+        animation: shimmer 4s linear infinite;
+      }
+
+      @keyframes pop-up {
+        0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+        70% { transform: scale(1.05); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+      }
+      .animate-pop-up {
+        animation: pop-up 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+      
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); transform: scale(1); }
+        50% { box-shadow: 0 0 50px rgba(99, 102, 241, 0.5); transform: scale(1.02); }
+      }
+      .animate-pulse-glow {
+        animation: pulse-glow 3s infinite;
+      }
+
+      @keyframes tracking-in-expand {
+        0% { letter-spacing: -0.5em; opacity: 0; }
+        40% { opacity: 0.6; }
+        100% { opacity: 1; }
+      }
+      .animate-tracking-in {
+        animation: tracking-in-expand 1s cubic-bezier(0.215, 0.610, 0.355, 1.000) both;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client.js",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "recharts": "https://esm.sh/recharts@2.15.0?external=react,react-dom",
+    "prop-types": "https://esm.sh/prop-types@15.8.1"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
