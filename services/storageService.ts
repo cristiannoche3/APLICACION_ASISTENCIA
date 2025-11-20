@@ -103,57 +103,64 @@ const normalizeText = (text: string) => {
 };
 
 export const syncFromCloud = async (): Promise<boolean> => {
-    let url = getCloudUrl();
-    if (!url) return false;
+    const rawUrl = getCloudUrl();
+    if (!rawUrl) return false;
 
-    // 1. VALIDATION & SANITIZATION
-    // Fix missing protocol which causes "Failed to fetch" or Invalid URL errors
-    if (!url.startsWith('http')) {
+    // 1. ROBUST URL CLEANING & SANITIZATION
+    let url = rawUrl.trim();
+
+    // Remove fragments and queries first (to handle /edit#gid=0 or ?usp=sharing)
+    url = url.split('#')[0];
+    url = url.split('?')[0];
+
+    // Ensure Protocol
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
         url = 'https://' + url;
     }
 
+    // Validate Domain
     if (!url.includes('script.google.com')) {
         console.warn("Sync aborted: Invalid Google Script URL");
         return false;
     }
 
-    // 2. CLEANING: Fix common copy-paste errors
-    url = url.trim();
-    // Remove query params to rebuild them cleanly
-    if (url.includes('?')) url = url.split('?')[0];
+    // Clean common browser suffixes
+    // This handles cases where user copies /edit, /copy, /dev, or /exec from browser bar
+    if (url.endsWith('/')) url = url.slice(0, -1);
     
-    // Remove suffixes often copied from browser address bar
     if (url.endsWith('/edit')) url = url.slice(0, -5);
     else if (url.endsWith('/copy')) url = url.slice(0, -5);
     else if (url.endsWith('/dev')) url = url.slice(0, -4);
-    else if (url.endsWith('/')) url = url.slice(0, -1);
     
     // Ensure endpoint is /exec for production deployment
-    if (!url.endsWith('/exec')) url += '/exec';
+    if (!url.endsWith('/exec')) {
+        url += '/exec';
+    }
     
     try {
-        // 3. FETCH: Simple GET with anti-caching
-        // We use URL object to safely append parameters
+        // 2. FETCH: Robust GET with anti-caching
         const fetchUrl = new URL(url);
         fetchUrl.searchParams.set('_t', Date.now().toString());
         
-        // Longer timeout for cold-starts of Apps Script
+        // Extended timeout for Google Apps Script cold starts (up to 25s)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
 
         const response = await fetch(fetchUrl.toString(), {
             method: 'GET',
-            // 'omit' prevents sending cookies, which is good for CORS to simple endpoints
+            // 'omit' is generally safer for CORS to Google Scripts (avoids auth prompt issues for public scripts)
+            // If the script is "Anyone", no creds are needed.
             credentials: 'omit',
-            // 'follow' is required because Google Scripts redirect
             redirect: 'follow',
+            mode: 'cors', 
+            referrerPolicy: 'no-referrer',
             signal: controller.signal
         });
         
         clearTimeout(timeoutId);
         
         if (!response.ok) {
-            console.error(`Sync failed: Server responded with ${response.status}`);
+            console.warn(`Sync failed: Server responded with ${response.status} ${response.statusText}`);
             return false;
         }
 
@@ -163,12 +170,17 @@ export const syncFromCloud = async (): Promise<boolean> => {
         try {
             data = JSON.parse(textData);
         } catch (e) {
-            console.error("Sync failed: Invalid JSON response. Check if script is deployed as 'Anyone'.", textData.substring(0, 100));
-            return false;
+             // Check if HTML (auth wall)
+             if (textData.includes('<!DOCTYPE html')) {
+                 console.warn("Sync failed: Received HTML instead of JSON. Check script permissions (Anyone).");
+             } else {
+                 console.warn("Sync failed: Invalid JSON response.");
+             }
+             return false;
         }
 
         if (data.status === 'error') {
-            console.error("Sync error from script:", data.error);
+            console.warn("Sync error from script:", data.error);
             return false;
         }
 
@@ -320,7 +332,15 @@ export const syncFromCloud = async (): Promise<boolean> => {
         }
         return true;
     } catch (e) {
-        console.error("Sync exception:", e);
+        const msg = e instanceof Error ? e.message : String(e);
+        // Filter out common network noise
+        if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+            // console.warn("Sync network error (retrying later):", msg);
+        } else if (msg.includes('Aborted')) {
+             // console.warn("Sync timed out");
+        } else {
+            console.error("Sync exception:", e);
+        }
         return false;
     }
 };
@@ -329,7 +349,18 @@ export const sendAttendanceToCloud = async (id_reunion: number, id_docente: numb
     let url = getCloudUrl();
     if (!url) return false;
 
+    // Basic sanitization for POST as well
+    url = url.trim();
     if (!url.startsWith('http')) url = 'https://' + url;
+    // Strip query/hash
+    url = url.split('?')[0].split('#')[0]; 
+    
+    // Clean suffixes if copied directly
+    if (url.endsWith('/edit')) url = url.slice(0, -5);
+    else if (url.endsWith('/copy')) url = url.slice(0, -5);
+    else if (url.endsWith('/dev')) url = url.slice(0, -4);
+    
+    if (!url.endsWith('/exec')) url += '/exec';
 
     try {
         await fetch(url, {

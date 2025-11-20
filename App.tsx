@@ -50,7 +50,7 @@ const App: React.FC = () => {
     };
     immediateSync();
 
-    // 2. FAST Interval Sync (1s)
+    // 2. FAST Interval Sync (15s) - Increased from 1s to avoid rate limits
     let isSyncInProgress = false;
     const syncInterval = setInterval(async () => {
         // Only sync if browser is online to avoid errors
@@ -70,7 +70,7 @@ const App: React.FC = () => {
         } finally {
             isSyncInProgress = false;
         }
-    }, 1000); // 1 Second Interval - Real Time Request
+    }, 15000); // 15 Seconds Interval - Safe for Google Script Quotas
 
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
