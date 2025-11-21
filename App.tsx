@@ -41,36 +41,31 @@ const App: React.FC = () => {
     window.addEventListener('branding-updated', updateBranding);
 
     // GLOBAL AUTOMATIC SYNC - CRITICAL FIX FOR RELOAD
-    // 1. Immediate Sync on Mount
-    const immediateSync = async () => {
+    // 1. Immediate Sync on Mount (Delayed to prevent race conditions)
+    const initialSyncTimer = setTimeout(async () => {
         if (navigator.onLine && getCloudUrl()) {
-           console.log("Triggering immediate start-up sync...");
            await syncFromCloud();
         }
-    };
-    immediateSync();
+    }, 2000);
 
-    // 2. FAST Interval Sync (15s) - Increased from 1s to avoid rate limits
+    // 2. FAST Interval Sync (15s)
     let isSyncInProgress = false;
     const syncInterval = setInterval(async () => {
-        // Only sync if browser is online to avoid errors
         if (!navigator.onLine) return;
 
         const cloudUrl = getCloudUrl();
         
-        // If no URL or sync already happening, skip
         if (!cloudUrl || isSyncInProgress) return;
 
         try {
             isSyncInProgress = true;
-            // This will dispatch 'data-updated' if successful
             await syncFromCloud();
         } catch (e) {
             // Silent fail for background sync
         } finally {
             isSyncInProgress = false;
         }
-    }, 15000); // 15 Seconds Interval - Safe for Google Script Quotas
+    }, 15000); 
 
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
@@ -101,6 +96,7 @@ const App: React.FC = () => {
         window.removeEventListener('hashchange', handleHashChange);
         window.removeEventListener('branding-updated', updateBranding);
         clearInterval(syncInterval);
+        clearTimeout(initialSyncTimer);
     };
   }, []);
 

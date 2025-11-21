@@ -36,7 +36,7 @@ const seedData = () => {
       localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify([]));
     }
   } catch (e) {
-    console.error("Error initializing storage:", e);
+    console.warn("Error initializing storage (safely ignored):", e);
   }
 };
 
@@ -46,53 +46,53 @@ seedData();
 // --- Branding Configuration ---
 
 export const getSchoolLogo = (): string => {
-    return localStorage.getItem(KEYS.SCHOOL_LOGO) || '';
+    try { return localStorage.getItem(KEYS.SCHOOL_LOGO) || ''; } catch { return ''; }
 };
 
 export const setSchoolLogo = (url: string): void => {
-    localStorage.setItem(KEYS.SCHOOL_LOGO, url);
+    try { localStorage.setItem(KEYS.SCHOOL_LOGO, url); } catch {}
 };
 
 export const getSchoolName = (): string => {
-    return localStorage.getItem(KEYS.SCHOOL_NAME) || 'DocenteTrack';
+    try { return localStorage.getItem(KEYS.SCHOOL_NAME) || 'DocenteTrack'; } catch { return 'DocenteTrack'; }
 };
 
 export const setSchoolName = (name: string): void => {
-    localStorage.setItem(KEYS.SCHOOL_NAME, name);
+    try { localStorage.setItem(KEYS.SCHOOL_NAME, name); } catch {}
 };
 
 export const getSchoolTagline = (): string => {
-    return localStorage.getItem(KEYS.SCHOOL_TAGLINE) || '';
+    try { return localStorage.getItem(KEYS.SCHOOL_TAGLINE) || ''; } catch { return ''; }
 };
 
 export const setSchoolTagline = (tagline: string): void => {
-    localStorage.setItem(KEYS.SCHOOL_TAGLINE, tagline);
+    try { localStorage.setItem(KEYS.SCHOOL_TAGLINE, tagline); } catch {}
 };
 
 // --- Cloud Configuration ---
 
 export const getCloudUrl = (): string => {
-    return (localStorage.getItem(KEYS.CLOUD_URL) || '').trim();
+    try { return (localStorage.getItem(KEYS.CLOUD_URL) || '').trim(); } catch { return ''; }
 };
 
 export const setCloudUrl = (url: string): void => {
-    localStorage.setItem(KEYS.CLOUD_URL, url.trim());
+    try { localStorage.setItem(KEYS.CLOUD_URL, url.trim()); } catch {}
 };
 
 export const getGlobalFormUrl = (): string => {
-    return (localStorage.getItem(KEYS.GLOBAL_FORM_URL) || '').trim();
+    try { return (localStorage.getItem(KEYS.GLOBAL_FORM_URL) || '').trim(); } catch { return ''; }
 };
 
 export const setGlobalFormUrl = (url: string): void => {
-    localStorage.setItem(KEYS.GLOBAL_FORM_URL, url.trim());
+    try { localStorage.setItem(KEYS.GLOBAL_FORM_URL, url.trim()); } catch {}
 };
 
 export const getFormEntryId = (): string => {
-    return (localStorage.getItem(KEYS.FORM_ENTRY_ID) || '').trim();
+    try { return (localStorage.getItem(KEYS.FORM_ENTRY_ID) || '').trim(); } catch { return ''; }
 };
 
 export const setFormEntryId = (id: string): void => {
-    localStorage.setItem(KEYS.FORM_ENTRY_ID, id.trim());
+    try { localStorage.setItem(KEYS.FORM_ENTRY_ID, id.trim()); } catch {}
 };
 
 // --- Sync Logic ---
@@ -120,14 +120,12 @@ export const syncFromCloud = async (): Promise<boolean> => {
 
     // Validate Domain
     if (!url.includes('script.google.com')) {
-        console.warn("Sync aborted: Invalid Google Script URL");
+        // console.warn("Sync aborted: Invalid Google Script URL");
         return false;
     }
 
     // Clean common browser suffixes
-    // This handles cases where user copies /edit, /copy, /dev, or /exec from browser bar
     if (url.endsWith('/')) url = url.slice(0, -1);
-    
     if (url.endsWith('/edit')) url = url.slice(0, -5);
     else if (url.endsWith('/copy')) url = url.slice(0, -5);
     else if (url.endsWith('/dev')) url = url.slice(0, -4);
@@ -148,8 +146,6 @@ export const syncFromCloud = async (): Promise<boolean> => {
 
         const response = await fetch(fetchUrl.toString(), {
             method: 'GET',
-            // 'omit' is generally safer for CORS to Google Scripts (avoids auth prompt issues for public scripts)
-            // If the script is "Anyone", no creds are needed.
             credentials: 'omit',
             redirect: 'follow',
             mode: 'cors', 
@@ -160,7 +156,6 @@ export const syncFromCloud = async (): Promise<boolean> => {
         clearTimeout(timeoutId);
         
         if (!response.ok) {
-            console.warn(`Sync failed: Server responded with ${response.status} ${response.statusText}`);
             return false;
         }
 
@@ -170,17 +165,10 @@ export const syncFromCloud = async (): Promise<boolean> => {
         try {
             data = JSON.parse(textData);
         } catch (e) {
-             // Check if HTML (auth wall)
-             if (textData.includes('<!DOCTYPE html')) {
-                 console.warn("Sync failed: Received HTML instead of JSON. Check script permissions (Anyone).");
-             } else {
-                 console.warn("Sync failed: Invalid JSON response.");
-             }
              return false;
         }
 
         if (data.status === 'error') {
-            console.warn("Sync error from script:", data.error);
             return false;
         }
 
@@ -192,9 +180,7 @@ export const syncFromCloud = async (): Promise<boolean> => {
              const meetings = getMeetings();
 
              // 1. Create Lookup Maps for Performance
-             // PRIMARY KEY: EMAIL (Normalized)
              const teacherEmailMap = new Map<string, Teacher>();
-             // Fallback Key: Name
              const teacherNameMap = new Map<string, Teacher>();
              
              teachers.forEach(t => {
@@ -202,7 +188,6 @@ export const syncFromCloud = async (): Promise<boolean> => {
                  if (t.nombre) teacherNameMap.set(normalizeText(t.nombre), t);
              });
 
-             // Meeting Maps
              const meetingMap = new Map<string, Meeting>();
              const meetingDateMap = new Map<string, Meeting>(); 
              
@@ -213,32 +198,22 @@ export const syncFromCloud = async (): Promise<boolean> => {
 
              const processedRecords: Attendance[] = [];
              const existingAttendance = getAttendance();
-             
-             // Create a quick lookup set for existing records to avoid duplicates O(1)
              const existingSet = new Set(existingAttendance.map(a => `${a.id_reunion}-${a.id_docente}`));
 
-             // 2. Loop through Sheets Data
              for (const row of data.attendance) {
-                 // If it's already an app record (unlikely from sheets, but possible if exported back), skip or merge
-                 if (row.id_docente && row.id_reunion) {
-                     continue;
-                 }
+                 if (row.id_docente && row.id_reunion) continue;
 
-                 // Extract Data from Sheet Row with Fallbacks
                  const emailInput = row['Email Address'] || row['Correo electrónico'] || row['email'] || row['Dirección de correo electrónico'] || row['Correo'];
                  const nameInput = row['Nombre'] || row['Nombre Completo'] || row['Docente'] || row['Apellidos y Nombres'];
                  const timestamp = row['Marca temporal'] || row['Timestamp'] || row['Fecha'] || row['Fecha y Hora'];
                  
                  if (!timestamp) continue;
 
-                 // --- STEP A: FIND TEACHER (EMAIL PRIORITY) ---
                  let teacher: Teacher | undefined;
 
-                 // 1. Try strict Email match first (Highest Reliability)
                  if (emailInput) {
                      const cleanEmail = normalizeText(String(emailInput));
                      teacher = teacherEmailMap.get(cleanEmail);
-                     // Try partial email match if exact fails
                      if (!teacher) {
                         for (const [emailKey, t] of teacherEmailMap.entries()) {
                             if (cleanEmail.includes(emailKey) || emailKey.includes(cleanEmail)) {
@@ -249,22 +224,18 @@ export const syncFromCloud = async (): Promise<boolean> => {
                      }
                  }
 
-                 // 2. If no email match, try Name match (Fallback)
                  if (!teacher && nameInput) {
                      teacher = teacherNameMap.get(normalizeText(String(nameInput)));
                  }
 
-                 if (!teacher) continue; // Docente not identified, skip
+                 if (!teacher) continue;
 
-                 // --- STEP B: FIND MEETING ---
                  let matchedMeeting: Meeting | undefined;
                  const meetingNameInput = row['Reunión'] || row['Evento'] || row['Nombre de la Reunión'] || row['Nombre del Evento'];
 
                  if (meetingNameInput) {
                      const normInput = normalizeText(String(meetingNameInput));
                      matchedMeeting = meetingMap.get(normInput);
-                     
-                     // Fuzzy match fallback
                      if (!matchedMeeting) {
                          for (const [key, m] of meetingMap.entries()) {
                              if (key.includes(normInput) || normInput.includes(key)) {
@@ -275,21 +246,17 @@ export const syncFromCloud = async (): Promise<boolean> => {
                      }
                  }
 
-                 // Fallback to Date Match if Meeting Name not found or not precise
                  if (!matchedMeeting) {
                      let dateStr = "";
                      if (timestamp.includes('T')) dateStr = timestamp.split('T')[0];
-                     else dateStr = timestamp.split(' ')[0]; // Handle "25/10/2023 8:00:00"
+                     else dateStr = timestamp.split(' ')[0];
                      
-                     // Try standard ISO first
                      if (meetingDateMap.has(dateStr)) {
                         matchedMeeting = meetingDateMap.get(dateStr);
                      } else {
-                         // Try parsing DD/MM/YYYY
                          const parts = dateStr.split(/[-/]/);
                          if (parts.length === 3) {
                              let y, m, d;
-                             // Detect format YYYY-MM-DD vs DD-MM-YYYY
                              if (parseInt(parts[0]) > 1000) { y=parts[0]; m=parts[1]; d=parts[2]; }
                              else { d=parts[0]; m=parts[1]; y=parts[2]; }
                              
@@ -301,7 +268,6 @@ export const syncFromCloud = async (): Promise<boolean> => {
                      }
                  }
 
-                 // If we found both Teacher and Meeting, create the record
                  if (matchedMeeting && teacher) {
                      const key = `${matchedMeeting.id}-${teacher.id}`;
                      if (!existingSet.has(key)) {
@@ -320,7 +286,6 @@ export const syncFromCloud = async (): Promise<boolean> => {
              }
 
              if (processedRecords.length > 0) {
-                 // Merge new records with existing ones
                  const merged = [...existingAttendance, ...processedRecords];
                  localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(merged));
                  hasChanges = true;
@@ -332,15 +297,20 @@ export const syncFromCloud = async (): Promise<boolean> => {
         }
         return true;
     } catch (e) {
+        // Completely suppress network errors to avoid "Failed to load app" and "Failed to fetch" noise
+        // We only want to log critical logic errors, not connectivity issues
         const msg = e instanceof Error ? e.message : String(e);
-        // Filter out common network noise
-        if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-            // console.warn("Sync network error (retrying later):", msg);
-        } else if (msg.includes('Aborted')) {
-             // console.warn("Sync timed out");
-        } else {
-            console.error("Sync exception:", e);
+        const lowerMsg = msg.toLowerCase();
+        
+        if (lowerMsg.includes('failed to fetch') || 
+            lowerMsg.includes('networkerror') || 
+            lowerMsg.includes('network error') ||
+            lowerMsg.includes('load failed') ||
+            lowerMsg.includes('aborted')) {
+            return false;
         }
+        
+        console.warn("Sync warning:", e);
         return false;
     }
 };
@@ -349,13 +319,10 @@ export const sendAttendanceToCloud = async (id_reunion: number, id_docente: numb
     let url = getCloudUrl();
     if (!url) return false;
 
-    // Basic sanitization for POST as well
     url = url.trim();
     if (!url.startsWith('http')) url = 'https://' + url;
-    // Strip query/hash
     url = url.split('?')[0].split('#')[0]; 
     
-    // Clean suffixes if copied directly
     if (url.endsWith('/edit')) url = url.slice(0, -5);
     else if (url.endsWith('/copy')) url = url.slice(0, -5);
     else if (url.endsWith('/dev')) url = url.slice(0, -4);
@@ -377,7 +344,7 @@ export const sendAttendanceToCloud = async (id_reunion: number, id_docente: numb
         });
         return true;
     } catch (e) {
-        console.error("Error posting attendance:", e);
+        console.warn("Error posting attendance (queued locally):", e);
         return false;
     }
 };
@@ -388,27 +355,21 @@ export const getTeachers = (): Teacher[] => {
   try {
     const data = localStorage.getItem(KEYS.TEACHERS);
     return data ? JSON.parse(data) : [];
-  } catch (e) {
-    return [];
-  }
+  } catch (e) { return []; }
 };
 
 export const getMeetings = (): Meeting[] => {
   try {
     const data = localStorage.getItem(KEYS.MEETINGS);
     return data ? JSON.parse(data) : [];
-  } catch (e) {
-    return [];
-  }
+  } catch (e) { return []; }
 };
 
 export const getAttendance = (): Attendance[] => {
   try {
     const data = localStorage.getItem(KEYS.ATTENDANCE);
     return data ? JSON.parse(data) : [];
-  } catch (e) {
-    return [];
-  }
+  } catch (e) { return []; }
 };
 
 export const getMeetingById = (id: number): Meeting | undefined => {
@@ -421,18 +382,18 @@ export const saveTeacher = (teacher: Omit<Teacher, 'id'>): Teacher => {
   const teachers = getTeachers();
   const newTeacher = { ...teacher, id: Date.now() };
   teachers.push(newTeacher);
-  localStorage.setItem(KEYS.TEACHERS, JSON.stringify(teachers));
+  try { localStorage.setItem(KEYS.TEACHERS, JSON.stringify(teachers)); } catch {}
   return newTeacher;
 };
 
 export const updateTeacher = (teacher: Teacher): void => {
   const teachers = getTeachers().map(t => t.id === teacher.id ? teacher : t);
-  localStorage.setItem(KEYS.TEACHERS, JSON.stringify(teachers));
+  try { localStorage.setItem(KEYS.TEACHERS, JSON.stringify(teachers)); } catch {}
 };
 
 export const deleteTeacher = (id: number): void => {
   const teachers = getTeachers().filter(t => t.id !== id);
-  localStorage.setItem(KEYS.TEACHERS, JSON.stringify(teachers));
+  try { localStorage.setItem(KEYS.TEACHERS, JSON.stringify(teachers)); } catch {}
 };
 
 // --- Meetings Actions ---
@@ -441,20 +402,20 @@ export const saveMeeting = (meeting: Omit<Meeting, 'id'>): Meeting => {
   const meetings = getMeetings();
   const newMeeting = { ...meeting, id: Date.now() };
   meetings.push(newMeeting);
-  localStorage.setItem(KEYS.MEETINGS, JSON.stringify(meetings));
+  try { localStorage.setItem(KEYS.MEETINGS, JSON.stringify(meetings)); } catch {}
   return newMeeting;
 };
 
 export const updateMeeting = (meeting: Meeting): void => {
   const meetings = getMeetings().map(m => m.id === meeting.id ? meeting : m);
-  localStorage.setItem(KEYS.MEETINGS, JSON.stringify(meetings));
+  try { localStorage.setItem(KEYS.MEETINGS, JSON.stringify(meetings)); } catch {}
 };
 
 export const deleteMeeting = (id: number): void => {
   const meetings = getMeetings().filter(m => m.id !== id);
-  localStorage.setItem(KEYS.MEETINGS, JSON.stringify(meetings));
+  try { localStorage.setItem(KEYS.MEETINGS, JSON.stringify(meetings)); } catch {}
   const attendance = getAttendance().filter(a => a.id_reunion !== id);
-  localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(attendance));
+  try { localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(attendance)); } catch {}
 };
 
 // --- Attendance Actions ---
@@ -466,7 +427,7 @@ export const markAttendance = (id_reunion: number, id_docente: number): boolean 
   if (existingRecord) {
     if (!existingRecord.asistio) {
         existingRecord.asistio = true;
-        localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(allAttendance));
+        try { localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(allAttendance)); } catch {}
         return true;
     }
     return false;
@@ -481,7 +442,7 @@ export const markAttendance = (id_reunion: number, id_docente: number): boolean 
   };
   
   allAttendance.push(newRecord);
-  localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(allAttendance));
+  try { localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(allAttendance)); } catch {}
   return true;
 };
 
@@ -497,11 +458,11 @@ export const toggleAttendance = (id_reunion: number, id_docente: number): boolea
         } else {
             allAttendance.splice(index, 1);
         }
-        localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(allAttendance));
+        try { localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(allAttendance)); } catch {}
         return false;
     } else {
         record.asistio = true;
-        localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(allAttendance));
+        try { localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(allAttendance)); } catch {}
         return true;
     }
   } else {
@@ -513,7 +474,7 @@ export const toggleAttendance = (id_reunion: number, id_docente: number): boolea
       asistio: true
     };
     allAttendance.push(newRecord);
-    localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(allAttendance));
+    try { localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(allAttendance)); } catch {}
     return true; 
   }
 };
@@ -540,7 +501,7 @@ export const saveAttendanceNote = (id_reunion: number, id_docente: number, nota:
             });
         }
     }
-    localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(allAttendance));
+    try { localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(allAttendance)); } catch {}
 };
 
 export const getMeetingAttendanceReport = (id_reunion: number): AttendanceReportItem[] => {
@@ -643,7 +604,7 @@ export const importDatabase = (jsonString: string): boolean => {
         localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(data.attendance));
         return true;
     } catch (e) {
-        console.error("Import failed", e);
+        console.warn("Import failed", e);
         return false;
     }
 };

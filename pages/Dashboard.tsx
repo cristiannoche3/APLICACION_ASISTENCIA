@@ -119,7 +119,7 @@ const Dashboard: React.FC = () => {
            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-50 via-indigo-50 to-transparent rounded-bl-[100px] opacity-60 transition-transform duration-700 group-hover:scale-125"></div>
 
            <div className="relative z-10 flex items-center gap-5">
-              <div className="p-4 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-200 group-hover:shadow-blue-400/50 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 ring-4 ring-blue-50">
+              <div className="p-4 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-200 group-hover:shadow-blue-400/50 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 ring-4 ring-blue-50 animate-bounce-in delay-200">
                 <UsersIcon className="w-7 h-7" />
               </div>
               <div>
@@ -138,7 +138,7 @@ const Dashboard: React.FC = () => {
            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-violet-50 via-fuchsia-50 to-transparent rounded-bl-[100px] opacity-60 transition-transform duration-700 group-hover:scale-125"></div>
 
            <div className="relative z-10 flex items-center gap-5">
-              <div className="p-4 rounded-2xl bg-gradient-to-tr from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-violet-200 group-hover:shadow-violet-400/50 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 ring-4 ring-violet-50">
+              <div className="p-4 rounded-2xl bg-gradient-to-tr from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-violet-200 group-hover:shadow-violet-400/50 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 ring-4 ring-violet-50 animate-bounce-in delay-300">
                 <CalendarIcon className="w-7 h-7" />
               </div>
               <div>
@@ -157,7 +157,7 @@ const Dashboard: React.FC = () => {
            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-50 via-teal-50 to-transparent rounded-bl-[100px] opacity-60 transition-transform duration-700 group-hover:scale-125"></div>
 
            <div className="relative z-10 flex items-center gap-5">
-              <div className="p-4 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-200 group-hover:shadow-emerald-400/50 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 ring-4 ring-emerald-50">
+              <div className="p-4 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-200 group-hover:shadow-emerald-400/50 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 ring-4 ring-emerald-50 animate-bounce-in delay-500">
                 <CheckCircleIcon className="w-7 h-7" />
               </div>
               <div>
