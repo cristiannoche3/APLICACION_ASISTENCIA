@@ -2,7 +2,7 @@
 import React from 'react';
 import { 
   PieChart, Pie, Cell, 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
 import { TrendData, RoleStat } from '../types';
@@ -168,7 +168,6 @@ export const RoleCompositionChart: React.FC<RoleChartProps> = ({ data }) => {
 };
 
 export const AttendanceByRole: React.FC<RoleChartProps> = ({ data }) => {
-  // Keeps the HTML implementation as it handles long labels better than Charts
   return (
     <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">
       {data.map((stat, index) => (

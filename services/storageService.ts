@@ -35,8 +35,8 @@ const seedData = () => {
     if (!localStorage.getItem(KEYS.ATTENDANCE)) {
       localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify([]));
     }
-  } catch (e) {
-    console.warn("Error initializing storage (safely ignored):", e);
+  } catch (_e) {
+    console.warn("Error initializing storage (safely ignored)");
   }
 };
 
@@ -164,7 +164,7 @@ export const syncFromCloud = async (): Promise<boolean> => {
         
         try {
             data = JSON.parse(textData);
-        } catch (e) {
+        } catch (_e) {
              return false;
         }
 
@@ -355,21 +355,21 @@ export const getTeachers = (): Teacher[] => {
   try {
     const data = localStorage.getItem(KEYS.TEACHERS);
     return data ? JSON.parse(data) : [];
-  } catch (e) { return []; }
+  } catch (_e) { return []; }
 };
 
 export const getMeetings = (): Meeting[] => {
   try {
     const data = localStorage.getItem(KEYS.MEETINGS);
     return data ? JSON.parse(data) : [];
-  } catch (e) { return []; }
+  } catch (_e) { return []; }
 };
 
 export const getAttendance = (): Attendance[] => {
   try {
     const data = localStorage.getItem(KEYS.ATTENDANCE);
     return data ? JSON.parse(data) : [];
-  } catch (e) { return []; }
+  } catch (_e) { return []; }
 };
 
 export const getMeetingById = (id: number): Meeting | undefined => {

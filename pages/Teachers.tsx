@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Teacher } from '../types';
 import { getTeachers, saveTeacher, deleteTeacher, updateTeacher } from '../services/storageService';
-import { PlusIcon, TrashIcon, UsersIcon, EditIcon, FileTextIcon, XIcon, CopyIcon, WhatsAppIcon, ClipboardListIcon, CheckCircleIcon, ArrowLeftIcon } from '../components/Icons';
+import { PlusIcon, TrashIcon, UsersIcon, EditIcon, XIcon, CopyIcon, WhatsAppIcon, ClipboardListIcon, CheckCircleIcon, ArrowLeftIcon } from '../components/Icons';
 import { useToast } from '../components/Toast';
 
 // Lista exhaustiva de roles escolares y asignaturas

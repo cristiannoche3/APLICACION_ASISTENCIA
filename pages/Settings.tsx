@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { getCloudUrl, setCloudUrl, getGlobalFormUrl, setGlobalFormUrl, syncFromCloud, exportDatabase, importDatabase, getSchoolLogo, setSchoolLogo, getSchoolName, setSchoolName, getSchoolTagline, setSchoolTagline, getTeachers, getFormEntryId, setFormEntryId } from '../services/storageService';
-import { SettingsIcon, DatabaseIcon, SparklesIcon, TrashIcon, XIcon, ClipboardListIcon, DownloadIcon, UploadIcon, EditIcon, CheckCircleIcon, FileTextIcon } from '../components/Icons';
+import { SettingsIcon, DatabaseIcon, SparklesIcon, TrashIcon, XIcon, ClipboardListIcon, DownloadIcon, UploadIcon, EditIcon, CheckCircleIcon } from '../components/Icons';
 import { useToast } from '../components/Toast';
 
 const APPS_SCRIPT_CODE = `
